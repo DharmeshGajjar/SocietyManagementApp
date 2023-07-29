@@ -1,0 +1,17 @@
+﻿
+
+----------------Install Require  Package-----------------------------
+
+Microsoft.EntityFrameworkCore.SqlServer
+Microsoft.EntityFrameworkCore.SqlServer.Design
+Microsoft.EntityFrameworkCore.Tools
+
+--------------------End Package---------------------------------------------------
+
+--------------------------Db Migration Command Uisng Scafolding-----------------------------
+
+Scaffold-DbContext "Server=144.91.71.201;Database=Society_Management;UID=PioSun;PWD=pio*123;" Microsoft.EntityFrameworkCore.SqlServer -OutputDir Models -force
+
+-------------------------------------End-----------------------------------------------------------------------------------
+
+

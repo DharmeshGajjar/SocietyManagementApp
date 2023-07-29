@@ -1,0 +1,963 @@
+﻿@model SocietyManagementWeb.Models.AccountOpeningModel
+@using Microsoft.AspNetCore.Http
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+@{
+    ViewData["Title"] = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    int isAdministrator = HttpContextAccessor.HttpContext.Session.GetInt32("IsAdministrator").Value;
+    List<SocietyManagementWeb.Models.AccountOpeningModel> accountopeningList = ViewBag.accountopeningList as List<SocietyManagementWeb.Models.AccountOpeningModel>;
+    List<SelectListItem> layoutList = ViewBag.layoutList as List<SelectListItem>;
+    List<SelectListItem> pageNoList = ViewBag.pageNoList as List<SelectListItem>;
+    var userRight = ViewBag.userRight as SocietyManagementWeb.Models.UserFormRightModel;
+    string headerAdd = "";
+    string headerList = "";
+    string gridAdd = "";
+    string gridList = "";
+    bool headerAddTrue = false;
+    bool headerListTrue = false;
+
+    if (userRight != null && (userRight.IsAdd || userRight.IsEdit) && userRight.IsList)
+    {
+        headerList = "active";
+        gridList = "show active";
+        headerAddTrue = true;
+    }
+    else if (userRight != null && (userRight.IsAdd || userRight.IsEdit))
+    {
+        headerAdd = "active";
+        gridAdd = "show active";
+        headerAddTrue = true;
+    }
+    else if (userRight != null && userRight.IsList)
+    {
+        headerList = "active";
+        gridList = "show active";
+        headerAddTrue = true;
+    }
+}
+
+
+<div class="card card-primary">
+    <div class="card-header" style="font-family: Nina">
+        <h6> Account Opening</h6>
+    </div>
+    <div class="card-body">
+        <div class="card card-primary card-tabs">
+            <div class="card-header p-0 pt-1">
+                <ul class="nav nav-tabs" id="custom-tabs-three-tab" role="tablist">
+                    @if (userRight != null && userRight.IsList)
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link @headerList" id="custom-tabs-three-list-tab" data-toggle="pill" href="#custom-tabs-three-list" role="tab" aria-controls="custom-tabs-three-list" aria-selected="@headerListTrue" style="font-family: Nina;font-size:medium">List (Alt+L)</a>
+                        </li>
+                    }
+                    @if (userRight != null && (userRight.IsAdd || userRight.IsEdit))
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link @headerAdd" id="custom-tabs-three-add-tab" data-toggle="pill" href="#custom-tabs-three-add" role="tab" aria-controls="custom-tabs-three-add" aria-selected="@headerAddTrue" style="font-family: Nina;font-size:medium">Add/Update (F2)</a>
+                        </li>
+                    }
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="col-md-12">
+                    <div class="tab-content" id="custom-tabs-three-tabContent">
+                        @if (userRight != null && userRight.IsList)
+                        {
+                            <div class="tab-pane fade @gridList" id="custom-tabs-three-list" role="tabpanel" aria-labelledby="custom-tabs-three-list-tab">
+                                <div class="table-responsive mt-2" style="font-family: Nina;font-size:medium;font-display:inherit">
+                                    <div class="col-md-12 col-12 mb-2 mt-2">
+                                        <div class="row">
+                                            <div class="col-md-1 mb-2 float-left">
+                                                <select class="form-control form-control-sm" onchange="loadData()" id="drpReportPageNoDatable">
+                                                    @for (int i = 0; i < pageNoList.Count; i++)
+                                                    {
+                                                        string checkedd = "checked";
+                                                        <option checked="@checkedd" value="@pageNoList[i].Value">@pageNoList[i].Text</option>
+                                                        checkedd = string.Empty;
+                                                    }
+
+                                                </select>
+                                            </div>
+                                            <div class="col-md-5 col-12">
+                                                <div class="row">
+                                                    <div class="col-md-6 col">
+                                                        <select class="form-control select2 drpReportLayout" onchange="loadData()">
+                                                            <option value="" ; style="width:200px">--Select Layout--</option>
+                                                            @if (layoutList != null && layoutList.Count > 0)
+                                                            {
+                                                                foreach (var item in layoutList)
+                                                                {
+                                                                    <option value="@item.Value">@item.Text </option>
+                                                                }
+                                                            }
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-md-2 col-auto mb-2 custommt-2-3">
+                                                        @if (isAdministrator == 1)
+                                                        {
+                                                            <button class="btn btn-dark btn-sm text-white" style="font-family: Nina;font-size:medium" onclick="window.open('/GridMaster/Index/' + $('.drpReportLayout').val(), '_blank');">
+                                                                Edit
+                                                            </button>
+                                                        }
+                                                    </div>
+                                                    <div class="col-md-4 mb-2 custommt-2-3">
+                                                        <button class="btn btn-primary btn-sm" id="btnExportToExcel">Excel</button>
+                                                        <button class="btn btn-primary btn-sm ml-6" id="btnExportToPDF">PDF</button>
+                                                    </div>
+
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3"></div>
+                                            <div class="col-md-3 col-12 float-right">
+                                                <input type="text" class="form-control form-control-sm" placeholder="Search" id="txtReportSearchDataTable" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="dataTable">
+
+                                    </div>
+                                    <div class="pager"></div>
+                                </div>
+                            </div>
+                        }
+                        @if (userRight != null && (userRight.IsAdd || userRight.IsEdit))
+                        {
+                            <div class="tab-pane fade" id="custom-tabs-three-add" role="tabpanel" aria-labelledby="custom-tabs-three-add-tab">
+                                <form method="post" class="mt-4" id="openingForm">
+                                    <div class="row">
+                                        <div class="d-none" id="dropdownAccount">
+                                            @if (Model != null && Model.OpeningBal != null && Model.OpeningBal.OblAccountList != null && Model.OpeningBal.OblAccountList.Count > 0)
+                                            {
+                                                @Html.DropDownListFor(x => x.OpeningBal.OblAAccVou, new SelectList(Model.OpeningBal.OblAccountList, "Value", "Text"), "Select", new { @class = "form-control", @style = "height:35px;" })
+                                            }
+
+                                        </div>
+                                        <div class="d-none" id="dropdownCrDr">
+                                            @if (Model != null && Model.OpeningBal != null && Model.OpeningBal.CrDrList != null && Model.OpeningBal.CrDrList.Count > 0)
+                                            {
+                                                @Html.DropDownListFor(x => x.OpeningBal.OblACrDr, new SelectList(Model.OpeningBal.CrDrList, "Value", "Text"), "Select", new { @class = "form-control", @style = "height:35px;" })
+                                            }
+
+                                        </div>
+
+                                        <div class="col-md-12">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div>
+                                                        <label class="control-label col-md-3 col-sm-3 col-xs-12 font-weight-bold customLabel" >
+                                                            V.No <span class="required">*</span>
+                                                        </label>
+
+                                                        <div class="form-outline form-white mb-2">
+                                                            @Html.TextBoxFor(x => x.OblVNo, new { @class = "form-control form-control-lg", @placeholder = "Voucher No", @tabindex = "1", @style = "height:35px;width:100px ", @required = "required" })
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div>
+                                                        <label class="control-label col-md-3 col-sm-3 col-xs-12 font-weight-bold customLabel" >
+                                                            Department <span class="required">*</span>
+                                                        </label>
+
+                                                        <div class="form-outline form-white mb-1">
+                                                            @if (Model != null && Model.DepList != null && Model.DepList.Count > 0)
+                                                            {
+                                                                @Html.DropDownListFor(x => x.OblDepVou, Model.DepList, "Select", new { @class = "form-control select2 OblDepVou", @tabindex = "2", style = "height:35px; width:250px", @onchange = "GetVoucherNumber()", @id = "txtOblDepVou", @required = "required" })
+                                                            }
+                                                            else
+                                                            {
+                                                                @Html.DropDownListFor(x => x.OblDepVou, Model.DepList, "Select", new { @class = "form-control select2 OblDepVou", @tabindex = "2", style = "height:35px; width:250px", @id = "txtOblDepVou", @required = "required" })
+                                                            }
+
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 d-none">
+                                            <div>
+                                                <label class="control-label col-md-3 col-sm-3 col-xs-12 font-weight-bold customLabel" >
+                                                    Date <span class="required"></span>
+                                                </label>
+                                                <div class="form-outline form-white mb-2">
+                                                    <label class="form-control form-control-lg" style="font-family: Nina; font-size: small; height: 30px; width: 200px; background-color: #e9ecef; ">@Convert.ToDateTime(Model.OblDt).ToString("dd-MM-yyyy")</label>
+                                                    @Html.TextBoxFor(x => x.OblDt, new { @class = "form-control form-control-lg", @placeholder = "Voucher No", @tabindex = "3", @style = "height:35px; width:100%", @required = "required", @type = "hidden" })
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="table-responsive mt-12" style="font-family: Nina;font-size:medium;font-display:inherit">
+                                        <table class="table table-borderless" id="tblAccOblTran" style="padding:0 0 0 0;margin:0 0 0 0">
+                                            <thead>
+                                                <tr>
+                                                    <th style="width:5% !important">
+                                                        Sr.No
+                                                    </th>
+                                                    <th>
+                                                        Account Name <span class="text-danger">*</span>
+                                                    </th>
+                                                    <th style="width:15% !important;text-align:right">
+                                                        Amount <span class="text-danger">*</span>
+                                                    </th>
+                                                    <th style="width:10% !important">
+                                                        Cr/Dr <span class="text-danger"></span>
+                                                    </th>
+                                                    <th style="width:30% !important">
+                                                        Remarks
+                                                    </th>
+                                                    <th>
+                                                        Actions
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr class="AddRows">
+                                                    <td style="width:5% !important">
+                                                        <input type="number" class="form-control" onblur="GetDataBySrNo(this.value)" value="0" style="padding:0px !important;padding-left:3px !important;padding-right:3px !important;height:35px;text-align:center" tabindex="4" />
+                                                    </td>
+                                                    <td>
+                                                        @if (Model != null && Model.OpeningBal != null && Model.OpeningBal.OblAccountList != null && Model.OpeningBal.OblAccountList.Count > 0)
+                                                        {
+                                                            @Html.DropDownListFor(x => x.OpeningBal.OblAAccVou, new SelectList(Model.OpeningBal.OblAccountList, "Value", "Text"), "Select", new { @class = "form-control select2 OblAAccVou", @style = "height:35px;width:550px", @tabindex = "5" })
+                                                        }
+                                                    </td>
+                                                    <td style="width:15% !important">
+                                                        @Html.TextBoxFor(x => x.OpeningBal.OblAAmt, new { @class = "form-control clsOblAAmount", @onkeypress = "return numeric_only (event, this);", @style = "height:35px; text-align:right;", @onfocus = "this.select()", @onchange = "CountMaster()", @tabindex = "6" })
+                                                    </td>
+                                                    <td style="width:10% !important">
+                                                        @if (Model != null && Model.OpeningBal != null && Model.OpeningBal.CrDrList != null && Model.OpeningBal.CrDrList.Count > 0)
+                                                        {
+
+                                                            @Html.DropDownListFor(x => x.OpeningBal.OblACrDr, Model.OpeningBal.CrDrList, "Select", new { @class = "form-control select2 OblACrDr", @style = "height:35px;width:200px", @tabindex = "7" })
+                                                        }
+                                                    </td>
+                                                    <td style="width:30% !important">
+                                                        @Html.TextBoxFor(x => x.OpeningBal.OblARemks, new { @class = "form-control", @style = "height:35px", @tabindex = "8" })
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <i class="fa fa-plus text-blue" onclick="AddRows(this)" style="font-size:18px"></i>
+                                                        <i class="fa fa-sync text-blue ml-3" onclick="RefreshObl(this)" style="font-size:18px"></i>
+                                                    </td>
+                                                </tr>
+                                                <tr class="d-none">
+                                                    <td style="padding:0 0 0 0">
+                                                        <label class="control-label pl-1"></label>
+                                                    </td>
+                                                    <td style="padding:0 0 0 8px">
+                                                        <label class="control-label pl-1"></label>
+                                                    </td>
+                                                    <td style="padding:0 0 0 8px;text-align:right">
+                                                        <label class="control-label pl-1"></label>
+                                                    </td>
+                                                    <td style="padding:0 0 0 8px">
+                                                        <label class="control-label pl-1"></label>
+                                                    </td>
+                                                    <td style="padding:0 0 0 8px">
+                                                        <label class="control-label pl-1"></label>
+                                                    </td>
+                                                    <td>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="" style="font-display:inherit">
+                                        <table class="" id="tblDisplay">
+                                            @if (Model != null && Model.OblList != null && Model.OblList.Count > 0)
+                                            {
+                                                <thead>
+                                                    <tr>
+                                                        <th style="width:5% !important">
+                                                            Sr.No
+                                                        </th>
+                                                        <th>
+                                                            Account Name <span class="text-danger">*</span>
+                                                        </th>
+                                                        <th style="width:15% !important">
+                                                            Amount <span class="text-danger">*</span>
+                                                        </th>
+                                                        <th style="width:10% !important">
+                                                            Cr/Dr <span class="text-danger">*</span>
+                                                        </th>
+                                                        <th style="width:30% !important">
+                                                            Remarks
+                                                        </th>
+                                                        <th>
+                                                            Actions
+                                                        </th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @for (int y = 0; y < Model.OblList.Count; y++)
+                                                    {
+                                                        <tr class="AddRows">
+                                                            <td style="padding:0 0 0 0">
+                                                                <input type="number" class="control-label" onblur="GetDataBySrNo(this.value)" value="@(y+1)" style="padding:0px !important;padding-left:3px !important;padding-right:3px !important;height:35px;width:78px;text-align:center" tabindex="4" disabled />
+                                                            </td>
+                                                            <td>
+                                                                @if (Model != null && Model.OpeningBal != null && Model.OpeningBal.OblAccountList != null && Model.OpeningBal.OblAccountList.Count > 0)
+                                                                {
+                                                                    @Html.DropDownListFor(x => x.OblList[y].OblAAccVou, new SelectList(Model.OpeningBal.OblAccountList, "Value", "Text"), "Select", new { @class = "form-control select2 OblAAccVou", @style = "height:35px;width:550px !important", @tabindex = "5" })
+                                                                }
+                                                            </td>
+                                                            <td style="width:15% !important">
+                                                                @Html.TextBoxFor(x => x.OblList[y].OblAAmt, new { @class = "form-control", @onkeypress = "return numeric_only (event, this);", @style = "height:35px; text-align:right; !important", @onfocus = "this.select()", @onchange = "CountMaster()", @tabindex = "6", @onKeyUp = "numericFilter(this);" })
+                                                            </td>
+                                                            <td style="width:10% !important">
+                                                                @if (Model != null && Model.OpeningBal != null && Model.OpeningBal.CrDrList != null && Model.OpeningBal.CrDrList.Count > 0)
+                                                                {
+                                                                    @Html.DropDownListFor(x => x.OblList[y].OblACrDr, Model.OpeningBal.CrDrList, "Select", new { @class = "form-control select2 OblACrDr", @style = "height:35px;width:200px !important", @tabindex = "7" })
+                                                                }
+                                                            </td>
+                                                            <td style="width:30% !important">
+                                                                @Html.TextBoxFor(x => x.OblList[y].OblARemks, new { @class = "form-control", @style = "height:35px !important", @tabindex = "8" })
+                                                            </td>
+                                                            <td class="text-center">
+                                                                <i class="fa fa-edit text-primary" onclick="EditRows(this)" style="font-size:18px"></i>
+                                                                <i class="fa fa-trash text-danger ml-3" onclick="DeleteRows(this)" style="font-size:18px"></i>
+                                                            </td>
+                                                        </tr>
+                                                    }
+                                                </tbody>
+
+                                            }
+                                        </table>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <div class="py-2 float-right d-flex align-items-center">
+                                                <label class="control-label font-weight-bold customLabel pr-2" style="font-family: Nina;font-size:medium;text-align:right">
+                                                    Total
+                                                </label>
+                                                <div class="form-outline form-white mb-2">
+                                                    <input type="text" id="txtOblAmount" readonly name="OblAmount" class="form-control form-control-lg"
+                                                           value="@Model.OblAmount" style="height:35px; width: 150px;text-align:right" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-12 text-center">
+                                            @if (userRight.IsEdit && Model != null && Model.OblVou > 0)
+                                            {
+                                                <button class="btn btn-primary px-md-4 text-white" style="font-family: Nina;font-size:medium" id="btnSave" type="button" onclick="AddOpening()">
+                                                    Save (F10)
+                                                </button>
+                                                <a href="/AccountOpening/index" class="btn btn-warning px-md-4 text-dark" style="font-family: Nina;font-size:medium">
+                                                    Cancel (Esc)
+                                                </a>
+                                            }
+                                            else if (userRight.IsAdd && Model.OblVou == 0)
+                                            {
+                                                <button class="btn btn-primary px-md-4 text-white" style="font-family: Nina;font-size:medium" id="btnSave" type="button" onclick="AddOpening()">
+                                                    Save (F10)
+                                                </button>
+                                                <a href="/AccountOpening/index" class="btn btn-warning px-md-4 text-dark" style="font-family: Nina;font-size:medium">
+                                                    Cancel (Esc)
+                                                </a>
+                                            }
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="col-md-12">
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        var acbvno = '@Html.Raw(Model.OblVou)';
+        if (acbvno != null && acbvno != '' && acbvno != "0") {
+            GoToAddTab()
+        }
+        else {
+            GoToListTab()
+        }
+
+
+            var status = '@Html.Raw(ViewBag.FocusType)';
+            if (status != null && status != '') {
+                if (status == "0") {
+                    $("#txtAcbVNo").focus();
+                }
+                if (status == "1") {
+                    $("#txtAcbOpDt").focus();
+                }
+            }
+            else {
+                $("#txtAcbVNo").focus();
+            }
+
+
+        });
+
+    function GoToAddTab() {
+        $('#custom-tabs-three-list-tab').removeClass('active');
+        $('#custom-tabs-three-add-tab').addClass('active');
+
+        $('#custom-tabs-three-list').removeClass('active');
+        $('#custom-tabs-three-add').addClass('active');
+        $('#custom-tabs-three-add').addClass('show');
+        $('#txtOblDepVou').focus();
+        if ($('#txtOblDepVou').children('option').length == 2) {
+            $('#txtOblDepVou').val($('#txtOblDepVou').children('option').eq(1).attr('value'));
+            SetSelect2();
+            //$('#txtBilDepVou').attr('disabled', true);
+            $('#OblVNo').focus();
+        }
+    }
+    function GoToListTab() {
+        $('#custom-tabs-three-list-tab').addClass('active');
+        $('#custom-tabs-three-add-tab').removeClass('active');
+
+        $('#custom-tabs-three-list').addClass('active');
+        $('#custom-tabs-three-list').addClass('show');
+        $('#custom-tabs-three-add').removeClass('active');
+        $('#custom-tabs-three-add').removeClass('show');
+        $('#txtReportSearchDataTable').focus();
+    }
+</script>
+<script>
+    var isRecentCalledEsc = false;
+    var isRecentCalledAddRows = false;
+    var isRecentCalledSave = false;
+    (function (code) {
+        code(window.jQuery, document, window);
+    }(function ($, document, window) {
+        $(function () {
+            $(window)
+                .initKeyboard({ debug: 1 })
+                .on('F2', function () {
+                    GoToAddTab()
+                }).on('F10', function () {
+                    //if (!isRecentCalledSave) {
+                    //    $("#btnSave").click();
+                    //    isRecentCalledSave = true;
+                    //    setTimeout(function () {
+                    //        isRecentCalledSave = false;
+                    //    }, 1000)
+                    //}
+                    $("#btnSave").click();
+                })
+                .on('Alt+L', function () {
+                    GoToListTab();
+                })
+                .on('Alt+C', function () {
+                    if (confirm("Do you want to exit without save?")) {
+                        location.href = '/AccountOpening/Index'
+                    }
+                    else {
+                        $('#txtAcbVNo').focus();
+                    }
+
+                }).on('Escape', function () {
+                    if (!isRecentCalledEsc) {
+                        isRecentCalledEsc = true;
+                        if (confirm("Do you want to exit without save?")) {
+                            location.href = '/AccountOpening/Index'
+                        }
+                        else {
+                            $('#txtAcbVNo').focus();
+                        }
+                        setTimeout(function () {
+                            isRecentCalledEsc = false;
+                        }, 500)
+                    }
+
+                })
+                .on('Pagedown', function () {
+                    if (!isRecentCalledAddRows) {
+                        isRecentCalledAddRows = true;
+                        AddRows();
+                        setTimeout(function () {
+                            isRecentCalledAddRows = false;
+                        }, 500)
+                    }
+                })
+                .on('Alt+I', function () {
+                    AddRows();
+                })
+        });
+    }));
+</script>
+
+
+<script>
+
+    //var isCalled = false;
+    var isRecentCall = false;
+    var isExcelUpload = false;
+    var isPasteDone = false;
+    var isSaveCalled = false;
+
+    //var depList = JSON.parse('@Html.Raw(Json.Serialize(Model.DepList))');
+
+    function AddRows() {
+        if (!isRecentCall) {
+            var previousRow = $('#tblAccOblTran').children('tbody').children('tr:last').prev();
+            if (previousRow != null) {
+                var accnm = $(previousRow).children('td').eq(1).children('select').children('option:selected').text();
+                var accvou = $(previousRow).children('td').eq(1).children('select').val();
+                var amt = $(previousRow).children('td').eq(2).children('input').val();
+                var crdrnm = $(previousRow).children('td').eq(3).children('select').children('option:selected').text();
+                var crdr = $(previousRow).children('td').eq(3).children('select').val();
+                var remarks = $(previousRow).children('td').eq(4).children('input').val();
+                var srNo = $(previousRow).children('td').eq(0).children('input').val();
+                if (accvou != null && amt != null && accvou != "" && amt != "") {
+
+
+                    if (srNo == null || srNo == '' || srNo == undefined || srNo == "0") {
+                        var html = $('#tblAccOblTran').children().find('tr.AddRows:first').html();
+
+                        if ($('#tblDisplay').children('tbody').children('tr').length <= 0) {
+                            $('#tblDisplay').append(`<thead>` + $('#tblAccOblTran').children('thead').html() + `</thead><tbody></tbody>`);
+                            $('#tblDisplay').children('tbody').append("<tr>" + html + "</tr>");
+                        }
+                        else {
+                            $('#tblDisplay').children('tbody').children('tr:last').after("<tr>" + html + "</tr>");
+                        }
+                    }
+
+                    $('#tblAccOblTran').children('tbody').children('tr:last').removeClass('d-none')
+                    $('#tblAccOblTran').children('tbody').children('tr:last').children('td').eq(1).children('label').html(accnm);
+                    $('#tblAccOblTran').children('tbody').children('tr:last').children('td').eq(2).children('label').html(amt);
+                    $('#tblAccOblTran').children('tbody').children('tr:last').children('td').eq(3).children('label').html(crdrnm);
+                    $('#tblAccOblTran').children('tbody').children('tr:last').children('td').eq(4).children('label').html(remarks);
+                    $('#tblAccOblTran').children('tbody').children('tr:last').children('td').eq(0).children('label').html(srNo);
+
+                    $('#tblAccOblTran').children('tbody').children('tr:last').prev().children('td').eq(1).children('select').val('');
+                    $('#tblAccOblTran').children('tbody').children('tr:last').prev().children('td').eq(2).children('input').val('');
+                    $('#tblAccOblTran').children('tbody').children('tr:last').prev().children('td').eq(3).children('select').val('');
+                    $('#tblAccOblTran').children('tbody').children('tr:last').prev().children('td').eq(4).children('input').val('');
+                    $('#tblAccOblTran').children('tbody').children('tr:last').prev().children('td').eq(0).children('input').val('0');
+
+
+                    if (srNo == null || srNo == '' || srNo == undefined || srNo == "0") {
+                        $('#tblDisplay').children('tbody').children('tr:last').children('td').eq(1).children('select').remove();
+                        $('#tblDisplay').children('tbody').children('tr:last').children('td').eq(1).children('span').remove();
+                        $('#tblDisplay').children('tbody').children('tr:last').children('td').eq(1).html($('#dropdownAccount').html());
+                        $('#tblDisplay').children('tbody').children('tr:last').children('td').eq(1).children('select').addClass('select2');
+                        $('#tblDisplay').children('tbody').children('tr:last').children('td').eq(1).children('select').val(accvou);
+                        $('#tblDisplay').children('tbody').children('tr:last').children('td').eq(1).children('select').removeClass('select2')
+
+                        $('#tblDisplay').children('tbody').children('tr:last').children('td').eq(2).children('input').val(amt);
+                        $('#tblDisplay').children('tbody').children('tr:last').children('td').eq(3).children('select').remove();
+                        $('#tblDisplay').children('tbody').children('tr:last').children('td').eq(3).children('span').remove();
+                        $('#tblDisplay').children('tbody').children('tr:last').children('td').eq(3).html($('#dropdownCrDr').html());
+                        $('#tblDisplay').children('tbody').children('tr:last').children('td').eq(3).children('select').addClass('select2');
+                        $('#tblDisplay').children('tbody').children('tr:last').children('td').eq(3).children('select').val(crdr);
+                        $('#tblDisplay').children('tbody').children('tr:last').children('td').eq(3).children('select').removeClass('select2')
+
+                        $('#tblDisplay').children('tbody').children('tr:last').children('td').eq(4).children('input').val(remarks);
+                        $('#tblDisplay').children('tbody').children('tr:last').children('td').eq(5).addClass('text-center')
+                        $('#tblDisplay').children('tbody').children('tr:last').children('td').eq(5).html(`<i class="fa fa-edit text-primary" onclick="EditRows(this)" style="font-size:18px"></i><i class="fa fa-trash text-danger ml-3" onclick="DeleteRows(this)" style="font-size:18px"></i>`)
+
+
+                        $('#tblDisplay').children('tbody').children('tr:last').children('td').eq(0).children('input').attr('disabled', true)
+                        $('#tblDisplay').children('tbody').children('tr:last').children('td').eq(1).children('select').attr('disabled', true)
+                        $('#tblDisplay').children('tbody').children('tr:last').children('td').eq(2).children('input').attr('disabled', true)
+                        $('#tblDisplay').children('tbody').children('tr:last').children('td').eq(3).children('select').attr('disabled', true)
+                        $('#tblDisplay').children('tbody').children('tr:last').children('td').eq(4).children('input').attr('disabled', true)
+
+
+                        $('#tblDisplay').children('tbody').children().find('input').each(function () {
+                            $(this).removeAttr('onfocusin')
+                            $(this).removeAttr('onfocus')
+                            $(this).removeAttr('onfocusout')
+                            $(this).removeClass('focusIn')
+                        })
+                    }
+                    else {
+                        $('#tblDisplay').children('tbody').children('tr').each(function () {
+                            if ($(this).children('td').eq(0).children('input').val() == srNo) {
+                                $(this).children('td').eq(1).children('select').remove();
+                                $(this).children('td').eq(1).children('span').remove();
+                                $(this).children('td').eq(1).html($('#dropdownAccount').html());
+                                $(this).children('td').eq(1).children('select').addClass('select2');
+                                $(this).children('td').eq(1).children('select').val(accvou);
+                                $(this).children('td').eq(1).children('select').removeClass('select2')
+                                $(this).children('td').eq(1).children('select').attr('disabled', true)
+
+
+                                $(this).children('td').eq(2).children('input').val(amt);
+                                $(this).children('td').eq(3).children('select').remove();
+                                $(this).children('td').eq(3).children('span').remove();
+                                $(this).children('td').eq(3).html($('#dropdownCrDr').html());
+                                $(this).children('td').eq(3).children('select').addClass('select2');
+                                $(this).children('td').eq(3).children('select').val(crdr);
+                                $(this).children('td').eq(3).children('select').removeClass('select2')
+                                $(this).children('td').eq(3).children('select').attr('disabled', true)
+
+                                $(this).children('td').eq(4).children('input').val(remarks);
+                                $(this).children('td').eq(5).addClass('text-center')
+                                $(this).children('td').eq(5).html(`<i class="fa fa-edit text-primary" onclick="EditRows(this)" style="font-size:18px"></i><i class="fa fa-trash text-danger ml-3" onclick="DeleteRows(this)" style="font-size:18px"></i>`)
+                            }
+                        })
+                    }
+
+                    SetSerialNumber();
+                    SetName();
+                    CountMaster();
+                    SetSelect2();
+                    isRecentCall = true
+                    setTimeout(function () {
+                        isRecentCall = false;
+                    }, 500)
+                    $('#tblAccOblTran').children('tbody').children('tr:last').prev().children('td').eq(1).children('select').focus();
+                }
+                else {
+                    showErrorMessage("Please enter all required fields");
+                }
+            }
+        }
+
+
+    }
+
+    function DeleteRows(obj) {
+        Swal.fire({
+            title: 'Are you sure want to delete row?',
+            showCancelButton: true,
+            confirmButtonText: 'Delete',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $(obj).closest('tr').remove();
+                SetSerialNumberOther();
+                if ($('#tblDisplay').children('tbody').children('tr').length <= 0) {
+                    $('#tblDisplay').children('thead').remove();
+                    $('#tblDisplay').children('tbody').remove();
+                }
+            } else if (result.isDenied) {
+            }
+        })
+    }
+
+    function SetSerialNumber() {
+        var count = 1;
+        $('#tblDisplay').children('tbody').children('tr:not(tr.lastRow)').each(function () {
+            $(this).children('td').eq(0).children('input').val(count);
+            $('#tblAccOblTran').children('tbody').children('tr:last').children('td').eq(0).children('label').html(count)
+            $(this).children('td').eq(1).children('select').attr('id', 'drpAccount' + count);
+            count = parseInt(count) + 1;
+        });
+    }
+
+    function SetName() {
+        $('#tblDisplay').children('tbody').children('tr:last').children("td").eq(1).children("select").attr("Id", "OpeningBal.OrdAAccVou99999999");
+        $('#tblDisplay').children('tbody').children('tr:not(tr.lastRow)').each(function (i) {
+            $(this).children("td").eq(1).children("select").attr("name", "OblList[" + (i) + "].OblAAccVou");
+            $(this).children("td").eq(1).children("select").attr("Id", "OblList.OblAAccVou" + (i) + "");
+            $(this).children("td").eq(2).children("input").attr("name", "OblList[" + (i) + "].OblAAmt");
+            $(this).children("td").eq(2).children("input").attr("Id", "OblList.OrdAAmt" + i + "");
+            $(this).children("td").eq(3).children("select").attr("name", "OblList[" + (i) + "].OblACrDr");
+            $(this).children("td").eq(3).children("select").attr("Id", "OblList.OblACrDr" + i + "");
+            $(this).children("td").eq(4).children("input").attr("name", "OblList[" + (i) + "].OblARemks");
+            $(this).children("td").eq(4).children("input").attr("Id", "OblList.OblARemks" + i + "");
+        });
+    }
+
+    function EditRows(obj) {
+        if (obj != null) {
+            var esrno = $(obj).closest('tr').children('td').eq(0).children('input').val();
+            var eaccvou = $(obj).closest('tr').children('td').eq(1).children('select').val();
+            var eamt = $(obj).closest('tr').children('td').eq(2).children('input').val();
+            var ecrdr = $(obj).closest('tr').children('td').eq(3).children('select').val();
+            var eremarks = $(obj).closest('tr').children('td').eq(4).children('input').val();
+
+
+            $('#tblAccOblTran').children('tbody').children('tr:last').prev().children('td').eq(0).children('input').val(esrno);
+            $('#tblAccOblTran').children('tbody').children('tr:last').prev().children('td').eq(1).children('select').val(eaccvou);
+            $('#tblAccOblTran').children('tbody').children('tr:last').prev().children('td').eq(2).children('input').val(eamt);
+            $('#tblAccOblTran').children('tbody').children('tr:last').prev().children('td').eq(3).children('select').val(ecrdr);
+            $('#tblAccOblTran').children('tbody').children('tr:last').prev().children('td').eq(4).children('input').val(eremarks);
+            $('#tblAccOblTran').children('tbody').children('tr:last').prev().children('td').eq(1).children('select').focus();
+            SetSelect2()
+            $('#tblAccOblTran').children('tbody').children('tr:last').prev().children('td').eq(1).children('select').focus();
+        }
+    }
+
+
+    function GetDataBySrNo(value) {
+        $('#tblDisplay').children('tbody').children('tr').each(function () {
+            if ($(this).children('td').eq(0).children('input').val() == value) {
+                EditRows($(this));
+                $('#tblAccOblTran').children('tbody').children('tr:last').children('td').eq(1).children('select').focus();
+            }
+        })
+    }
+
+    function RefreshObl() {
+        var raccvou = $('#tblDisplay').children('tbody').children('tr:last').children('td').eq(1).children('select').val();
+        var rcrdr = $('#tblDisplay').children('tbody').children('tr:last').children('td').eq(3).children('select').val();
+        var ramt = $('#tblDisplay').children('tbody').children('tr:last').children('td').eq(2).children('select').val();
+        var rremks = $('#tblDisplay').children('tbody').children('tr:last').children('td').eq(4).children('select').val();
+
+        $('#tblAccOblTran').children('tbody').children('tr:last').prev().children('td').eq(1).children('select').val('');
+        $('#tblAccOblTran').children('tbody').children('tr:last').prev().children('td').eq(3).children('select').val('');
+        $('#tblAccOblTran').children('tbody').children('tr:last').prev().children('td').eq(2).children('input').val('');
+        $('#tblAccOblTran').children('tbody').children('tr:last').prev().children('td').eq(4).children('input').val('');
+        $('#tblAccOblTran').children('tbody').children('tr:last').prev().children('td').eq(0).children('input').val('0');
+        SetSelect2();
+        $('#tblAccOblTran').children('tbody').children('tr:last').prev().children('td').eq(1).children('select').focus();
+    }
+
+    $(function () {
+        var oblvou = '@Html.Raw(Model.OblVou )';
+        if (oblvou != null && oblvou != '' && oblvou != 0) {
+            GoToAddTab()
+            var aaccvou = $('#tblDisplay').children('tbody').children('tr:last').children('td').eq(1).children('select').val();
+            var aamt = $('#tblDisplay').children('tbody').children('tr:last').children('td').eq(2).children('input').val();
+            var acrdr = $('#tblDisplay').children('tbody').children('tr:last').children('td').eq(3).children('select').val();
+            var aremks = $('#tblDisplay').children('tbody').children('tr:last').children('td').eq(4).children('input').val();
+            var asrno = $('#tblDisplay').children('tbody').children('tr:last').children('td').eq(0).children('input').val();
+            $('#tblAccOblTran').children('tbody').children('tr:last').removeClass('d-none')
+            $('#tblAccOblTran').children('tbody').children('tr:last').children('td').eq(1).children('label').html(aaccvou);
+            $('#tblAccOblTran').children('tbody').children('tr:last').children('td').eq(2).children('label').html(aamt);
+            $('#tblAccOblTran').children('tbody').children('tr:last').children('td').eq(3).children('label').html(acrdr);
+            $('#tblAccOblTran').children('tbody').children('tr:last').children('td').eq(4).children('label').html(aremks);
+            $('#tblAccOblTran').children('tbody').children('tr:last').children('td').eq(0).children('label').html(asrno);
+            $('#tblAccOblTran').children('tbody').children('tr:last').children('td').eq(0).children('label').html(asrno);
+
+            $('#tblAccOblTran').children('tbody').children('tr:last').prev().children('td').eq(1).children('select').val('');
+            $('#tblAccOblTran').children('tbody').children('tr:last').prev().children('td').eq(2).children('input').val('');
+            $('#tblAccOblTran').children('tbody').children('tr:last').prev().children('td').eq(3).children('select').val('');
+            $('#tblAccOblTran').children('tbody').children('tr:last').prev().children('td').eq(4).children('input').val('');
+            $('#tblAccOblTran').children('tbody').children('tr:last').prev().children('td').eq(0).children('input').val('0');
+            $('#tblDisplay').children('tbody').children('tr').each(function (i) {
+                $(this).children("td").eq(1).children('select').attr('disabled', true);
+                $(this).children("td").eq(2).children('input').attr('disabled', true);
+                $(this).children("td").eq(3).children('select').attr('disabled', true);
+                $(this).children("td").eq(4).children('input').attr('disabled', true);
+                $(this).children("td").eq(0).children('input').attr('disabled', true);
+            });
+        }
+    })
+
+
+    function numeric_only(event, input) {
+        if ((event.which < 32) || (event.which > 126)) return true;
+        return jQuery.isNumeric($(input).val() + String.fromCharCode(event.which));
+    }//
+
+    function numericFilter(txb) {
+        txb.value = txb.value.replace(/[^\0-9]/ig, "");
+    }
+
+    function CountMaster() {
+        var ttlAmount = 0;
+        $('#tblDisplay').children('tbody').children('tr').each(function () {
+            ttlAmount = parseFloat(ttlAmount) + parseFloat($(this).children('td').eq(2).children('input').val());
+        });
+        $('#txtOblAmount').val(ttlAmount);
+    }
+
+    function GetVoucherNumber() {
+        var depVal = $('select[name="OblDepVou"]').val();
+        if (depVal) {
+            $.ajax({
+                type: "POST",
+                url: '/AccountOpening/GetLatestVouNumber',
+                data: { "vou": depVal },
+                dataType: "JSON",
+                success: function (response) {
+                    $('input[name="OblVNo"]').val(response.message);
+                },
+                error: function (response) {
+
+                }
+            });
+        }
+    }
+
+
+
+    $('#OblDt').focusout(function () {
+        $('#tblAccountOpeningTransaction').children().find('tr.lastRow').prev().children('td').eq(1).children('select').focus();
+    })
+
+
+    $("#btnSave").click(function () {
+        AddRows();
+        if (!isSaveCalled) {
+            isSaveCalled = true;
+            setTimeout(function () {
+                isSaveCalled = false;
+            }, 1000)
+
+            if (ValidateTextbox()) {
+                localStorage.setItem("AccouontOpening", "1");
+                if (!isRecentCall) {
+                    var previousRow = $('#tblAccOblTran').children('tbody').children('tr:last').prev();
+                    if (previousRow != null) {
+                        var eamt = $(previousRow).children('td').eq(2).children('input').val();
+                        var eaccvou = $(previousRow).children('td').eq(1).children('select').val();
+                        if (eamt != 0 && eaccvou != 0) {
+                            AddRows()
+                        }
+                    }
+                }
+                $('#tblDisplay').children('tbody').children('tr').each(function (i) {
+                    if (!$(this).children("td").eq(4).children("input").val()) {
+                        $(this).children("td").eq(4).children("input").val("-1")
+                    }
+                    $(this).children("td").eq(1).children('select').attr('disabled', false);
+                    $(this).children("td").eq(2).children('input').attr('disabled', false);
+                    $(this).children("td").eq(3).children('select').attr('disabled', false);
+                    $(this).children("td").eq(4).children('input').attr('disabled', false);
+                    $(this).children("td").eq(0).children('input').attr('disabled', false);
+                });
+            }
+            else {
+                showErrorMessage("Please enter all compulsory fields!");
+                return false;
+            }
+        }
+    });
+
+</script>
+
+<script>
+
+    var isRecentCalled = false;
+
+
+    $(function () {
+
+        loadData();
+        var pageIndex = '';
+        var pageSize = '';
+        var totalRecord = '';
+        var isDelete = '@Html.Raw(userRight.IsDelete)';
+        var isEdit = '@Html.Raw(userRight.IsEdit)';
+    })
+
+    var timer = null;
+    $('#txtReportSearchDataTable').keyup(function (e) {
+        if (e.keyCode >= 112 && e.keyCode <= 123) {
+            e.preventDefault();
+            return false;
+        }
+        else {
+            clearTimeout(timer);
+
+            timer = setTimeout(loadData, 1000)
+        }
+
+    });
+
+    function loadData(pageIndex, columnName, sortBy) {
+            isRecentCalled = true;
+            if (pageIndex == undefined || pageIndex == "" || pageIndex == "0" || pageIndex == 0) {
+                pageIndex = 1;
+            }
+            var layoutId = $('.drpReportLayout').val();
+
+            if (!layoutId) {
+                $('.drpReportLayout').val($('.drpReportLayout').children('option').eq(1).prop('value'));
+                SetSelect2()
+
+            }
+            if (!columnName) {
+                columnName = '';
+            }
+            if (!sortBy) {
+                sortBy = '';
+            }
+            $('.dataTable').html();
+            $.ajax({
+                url: '/AccountOpening/GetReportView',
+                type: 'GET',
+                data: { pageIndex: pageIndex, pageSize: $('#drpReportPageNoDatable').val(), searchValue: $('#txtReportSearchDataTable').val(), gridMstId: $('.drpReportLayout').val(), columnName: columnName, sortby: sortBy },
+                dataType: 'HTML',
+                traditional: true, // add this
+                success: function (data) {
+                    $('.dataTable').html(data);
+                    setTimeout(function () {
+                        isRecentCalled = false;
+                    }, 2000)
+                },
+                failure: function (response) {
+                    errorMessage(response);
+                }
+            });
+    }
+
+    $('#btnExportToExcel').click(function () {
+        window.location.href = "/AccountOpening/ExportToExcelPDF?gridMstId=" + $('.drpReportLayout').val() + "&searchValue=" + $('#txtReportSearchDataTable').val() +"&type=1";
+    })
+
+    $('#btnExportToPDF').click(function () {
+        window.location.href = "/AccountOpening/ExportToExcelPDF?gridMstId=" + $('.drpReportLayout').val() + "&searchValue=" + $('#txtReportSearchDataTable').val() + "&type=2";
+    })
+
+    //var isSaveCalled = false;
+    function ValidateTextbox() {
+        var isAllow = true;
+        if (!$('select[name="OblDepVou"]').val()) {
+            isAllow = false;
+        }
+        if (!$('input[name="OblVNo"]').val()) {
+            isAllow = false;
+        }
+        if (!$('input[name="OblDt"]').val()) {
+            isAllow = false;
+        }
+
+        return isAllow;
+    }
+
+
+    function AddOpening() {
+        if (ValidateTextbox()) {
+            $('#Vno').removeAttr('disabled');
+            $('#AnnVou').removeAttr('disabled');
+            $("#tblDisplay tr td").find("input").attr('disabled', false);
+            $("#tblDisplay tr td").find("select").attr('disabled', false);
+            //$('#SupEmpVou').removeAttr('disabled')
+            //$('#ManEmpVou').removeAttr('disabled')
+            $('#openingForm').submit();
+        }
+        else {
+            showErrorMessage("Please enter all compulsory fields.");
+        }
+    }
+
+</script>
+<script>
+    $(document).ready(function () {
+        $('#OblVNo').focusout(function () {
+            $('#tblAccOblTran').children().find('tr.lastRow').prev().children('td').eq(1).children('select').focus();
+        })
+    })
+</script>
+<script>
+    function SetSelect2() {
+        $(".select2").select2({
+            placeholder: "---Select---",
+        });
+    }
+    $(document).ready(function () {
+
+        $(".OblDepVou").select2({
+            placeholder: "---Select---",
+        });
+
+        $(".OblAAccVou").select2({
+            placeholder: "---Select---",
+        });
+
+        $(".OblACrDr").select2({
+            placeholder: "---Select---",
+        });
+
+        $('.drpReportLayout').select2({
+            placeholder: "---Select---",
+        });
+    });
+</script>

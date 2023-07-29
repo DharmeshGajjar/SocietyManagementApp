@@ -1,0 +1,242 @@
+﻿@model SocietyManagementWeb.Models.EmployeeClass
+@{
+    ViewData["Title"] = "Add/Update Employee";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    List<SelectListItem> layoutList = ViewBag.LayoutList != null ? ViewBag.LayoutList as List<SelectListItem> : null;
+}
+
+<div class="card card-primary">
+    <div class="card-header" style="font-family:Verdana">
+        <h6> @ViewData["Title"]</h6>
+    </div>
+    <div class="card-body">
+        <form method="post" autocomplete="off">
+            @Html.HiddenFor(x => x.EmployeeId)
+            @Html.HiddenFor(x => x.Data)
+            <div class="row">
+                <div class="col-1">
+                    <label class="control-label">
+                        Sr.No
+                    </label>
+                    <div class="col-12">
+                        <input type="number" class="form-control" name="transactionGridSrNo" placeholder="Sr.No" onblur="EditRow(this.value)" />
+                    </div>
+                </div>
+                <div class="col-3">
+                    <label class="control-label">
+                        Name
+                    </label>
+                    <div class="col-12">
+                        @Html.TextBoxFor(x => Model.EmployeeName, new { @class = "form-control", @placeholder = "Employee Name", @style = "font-family: Verdana;font-size:small;", @required = "required" })
+                    </div>
+                </div>
+                <div class="col-3">
+                    <label class="control-label">
+                        Mobile
+                    </label>
+                    <div class="col-12">
+                        @Html.TextBoxFor(x => Model.EmployeeMobile, new { @class = "form-control", @placeholder = "Employee Mobile", @style = "font-family: Verdana;font-size:small;", @required = "required" })
+                    </div>
+                </div>
+                <div class="col-2">
+                    <label class="control-label">
+                        Department
+                    </label>
+                    <div class="col-12">
+                        @Html.DropDownListFor(x => Model.EmployeeDepartment, new SelectList(ViewBag.DepartmentList, "Value", "Text"), "Select", new { @class = "form-control select2", @style = "font-family: Verdana;font-size:small;", @required = "required", @id = "txtGrdMnuVou" })
+                    </div>
+                </div>
+                <div class="col-3">
+                    <label class="control-label">
+                        Address
+                    </label>
+                    <div class="col-12">
+                        @Html.TextAreaFor(x => Model.EmployeeAddress, new { @class = "form-control", @placeholder = "Employee Address", @style = "font-family: Verdana;font-size:small;", @required = "required" })
+                    </div>
+                </div>
+                <div class="col-3">
+                    <label class="control-label">
+                        Gender
+                    </label>
+                    <div class="row">
+                        <div class="col-6">
+                            <span> Male </span>
+                            <input type="radio" value="1" name="EmployeeGender" class="ml-2" style="height:15px;width:15px" />
+                        </div>
+                        <div class="col-6">
+                            <span> Female </span>
+                            <input type="radio" value="2" name="EmployeeGender" class="ml-2" style="height:15px;width:15px" />
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <label class="control-label">
+                        Hobbies
+                    </label>
+                    <div class="row">
+                        <div class="col-4">
+                            <span> Cricket </span>
+                            <input type="checkbox" value="1" name="EmployeeHobbies" class="ml-2" style="height:15px;width:15px" />
+                        </div>
+                        <div class="col-4">
+                            <span> Football </span>
+                            <input type="checkbox" value="2" name="EmployeeHobbies" class="ml-2" style="height:15px;width:15px" />
+                        </div>
+                        <div class="col-4">
+                            <span> Volleyball </span>
+                            <input type="checkbox" value="3" name="EmployeeHobbies" class="ml-2" style="height:15px;width:15px" />
+                        </div>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <label class="control-label">
+                        Salary
+                    </label>
+                    <div class="col-12">
+                        @Html.TextBoxFor(x => Model.EmployeeSalary, new { @class = "form-control", @placeholder = "Employee Salary", @style = "font-family: Verdana;font-size:small;", @required = "required" })
+                    </div>
+                </div>
+                <div class="col-3">
+                    <label class="control-label">
+                        PF
+                    </label>
+                    <div class="col-12">
+                        @Html.TextBoxFor(x => Model.EmployeePF, new { @class = "form-control", @placeholder = "Employee Salary", @style = "font-family: Verdana;font-size:small;", @required = "required" })
+                    </div>
+                </div>
+
+                <div class="col-12 mt-3 text-center">
+                    <input type="submit" class="btn btn-success" value="Submit">
+                </div>
+            </div>
+        </form>
+        <div class="callout callout-success col-12 mt-3">
+            <div class="row">
+                <div class="col-2">
+                    <label>Tran. Layout</label>
+                </div>
+                <div class="col-2">
+                    <select class="form-control drpTransactionLayout">
+                        @if (layoutList != null && layoutList.Count > 0)
+                        {
+                            foreach (var item in layoutList)
+                            {
+                                <option value="@item.Value">@item.Text</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-7"></div>
+                <div class="col-1">
+                    <button type="button" class="btn btn-outline-danger p-0 pl-2 pr-2" onclick="DeleteConfirmation(this)"><i class="fa fa-trash"></i> Delete</button>
+                </div>
+            </div>
+            <div class="customDivision">
+                <table class="custom-table" id="transaction-grid-1">
+                    @*<thead>
+                        <tr>
+                            <th style="min-width:1000px !important;max-width:1000px !important;">
+                                EmployeeName
+                            </th>
+                            <th style="min-width:150px !important;max-width:150px !important;">
+                                EmployeeName
+                            </th>
+                            <th style="min-width:150px !important;max-width:150px !important;">
+                                EmployeeName
+                            </th>
+                            <th style="min-width:150px !important;max-width:150px !important;">
+                                EmployeeName
+                            </th>
+                            <th style="min-width:150px !important;max-width:150px !important;">
+                                EmployeeName
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="min-width:1000px !important;max-width:1000px !important;">
+                                EmployeeName
+                            </td>
+                            <td style="min-width:150px !important;max-width:150px !important;text-overflow:ellipsis;overflow:hidden">
+                                EmployeeNameEmployeeNameEmployeeNameEmployeeNameEmployeeNameEmployeeName
+                            </td>
+                            <td style="min-width:150px !important;max-width:150px !important;white-space:normal">
+                                EmployeeNameEmployeeNameEmployeeNameEmployeeNameEmployeeNameEmployeeName
+                            </td>
+                            <td style="min-width:150px !important;max-width:150px !important;">
+                                EmployeeName
+                            </td>
+                            <td style="min-width:150px !important;max-width:150px !important;">
+                                EmployeeName
+                            </td>
+                        </tr>
+                    </tbody>*@
+                </table>
+            </div>
+        </div>
+
+        <div class="callout callout-success col-12 mt-3">
+            <div class="row">
+                <div class="col-2">
+                    <label>Tran. Layout</label>
+                </div>
+                <div class="col-2">
+                    <select class="form-control drpTransactionLayout" id="dropdown2">
+                        @if (layoutList != null && layoutList.Count > 0)
+                        {
+                            foreach (var item in layoutList)
+                            {
+                                <option value="@item.Value">@item.Text</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-7"></div>
+                <div class="col-1">
+                    @*<button type="button" class="btn btn-outline-danger p-0 pl-2 pr-2" onclick="DeleteConfirmation(this)"><i class="fa fa-trash"></i> Delete</button>*@
+                </div>
+            </div>
+            <div class="customDivision">
+                <table class="custom-table" id="transaction-grid-2">
+                  
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts{
+    <script src="~/js/transaction-grid.js"></script>
+
+    <script>
+        var isRecentCalledDown = false;
+        (function (code) {
+            code(window.jQuery, document, window);
+        }(function ($, document, window) {
+            $(function () {
+                $(window)
+                    .initKeyboard({ debug: 1 })
+                    .on('Pagedown', function () {
+                        if (!isRecentCalledDown) {
+                            isRecentCalledDown = true;
+                            AddDataToGrid()
+
+                            setTimeout(function () {
+                                isRecentCalledDown = false;
+                            },1000)
+                        }
+                        
+                    })
+            });
+        }));
+    </script>
+
+<script>
+    $(function () {
+        $('#dropdown2').val("7")
+        $('.drpTransactionLayout').change();
+    })
+</script>
+
+
+}

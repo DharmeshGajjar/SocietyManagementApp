@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using SocietyManagementWeb.Classes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,6 +26,30 @@ namespace SocietyManagementWeb
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllersWithViews();
+
+            services.AddMvcCore()
+        .AddDataAnnotations()
+        .AddCors();
+
+            services.AddSession(options =>
+            {
+                options.IdleTimeout = TimeSpan.FromHours(1);
+                options.Cookie.HttpOnly = true;
+                options.Cookie.IsEssential = true;
+            });
+
+            services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+
+            //MailHelper.FromEmail = Configuration["SMTP:FromEmail"];
+            //MailHelper.Password = Configuration["SMTP:Password"];
+            //MailHelper.Port = Convert.ToInt32(Configuration["SMTP:Port"]);
+            //MailHelper.Host = Configuration["SMTP:Host"];
+
+            WhatAppHelper.skrumessage = Configuration["WHATAPP:skrumessage"];
+            WhatAppHelper.SURL = Configuration["WHATAPP:SURL"];
+            //WhatAppHelper.SInstanceID =Configuration["WHATAPP:SInstanceID"];
+            //WhatAppHelper.SToken = Configuration["WHATAPP:SToken"];
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -44,13 +70,16 @@ namespace SocietyManagementWeb
 
             app.UseRouting();
 
+            app.UseCookiePolicy();
+            app.UseSession();
+
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllerRoute(
                     name: "default",
-                    pattern: "{controller=Home}/{action=Index}/{id?}");
+                    pattern: "{controller=Login}/{action=Index}/{id?}");
             });
         }
     }
